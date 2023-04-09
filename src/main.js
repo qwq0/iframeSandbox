@@ -51,7 +51,7 @@ export class SandboxContext
 
     constructor()
     {
-        if (!("sandbox" in HTMLIFrameElement.prototype))
+        if (!(("sandbox" in HTMLIFrameElement.prototype) && Object.hasOwn(HTMLIFrameElement.prototype, "contentDocument")))
             throw "sandbox property are not supported";
         let iframe = document.createElement("iframe");
         iframe.sandbox.add("allow-scripts");
@@ -143,6 +143,8 @@ export class SandboxContext
         {
             if (!this.#available)
             {
+                if (iframe.contentDocument)
+                    throw "sandbox isolation failed";
                 port.start();
                 iframe.contentWindow.postMessage("setMessagePort", "*", [channel.port2]); // 初始化通信管道
             }

@@ -99,7 +99,7 @@ import { uniqueIdentifierString } from "./util/uniqueIdentifier.js";
 
     window.addEventListener("load", e =>
     {
-        console.log("iframe sandbox onload");
+        console.log("sandbox onload");
     });
 
 })();

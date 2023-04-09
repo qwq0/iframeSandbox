@@ -1,0 +1,37 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "rollup -i src/main.js -o dist/iframeSandbox.js -f es",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build types",
+            "type": "shell",
+            "command": "tsc ./src/main.js --declaration --allowJs --emitDeclarationOnly --strictNullChecks --exactOptionalPropertyTypes --outdir ./dist/types \n rollup -i dist/types/src/main.d.ts -o dist/iframeSandbox.d.ts -f es -p rollup-plugin-dts",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build sandbox",
+            "type": "shell",
+            "command": "node ./script/buildSandbox.mjs",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

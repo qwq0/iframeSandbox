@@ -26,7 +26,22 @@ import { SandboxContext } from "../src/index.js";
         }
     };
     sandbox.apiObj = apiObj;
-    await sandbox.execJs(`
+
+    await sandbox.waitAvailable();
+    console.log(sandbox);
+
+    for (let i = 0; i < 10; i++)
+    {
+        let worker = sandbox.createWorker();
+        await worker.waitAvailable();
+        await worker.execJs(`console.log(${i});`);
+        worker.destroy();
+    }
+    
+    let worker = sandbox.createWorker();
+    worker.apiObj = apiObj;
+    await worker.waitAvailable();
+    await worker.execJs(`
         (async () =>
         {
             console.log("console.log in sandbox");
@@ -75,5 +90,4 @@ import { SandboxContext } from "../src/index.js";
             }
         })();
     `);
-    console.log(sandbox);
 })();

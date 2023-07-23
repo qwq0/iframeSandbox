@@ -1,54 +1,41 @@
-import { sandboxScript } from "../generate/sandboxScript.js";
 import { extractFunction, injectFunction } from "./functionMapping.js";
 import { EventHandler } from "./util/EventHandler.js";
 
 /**
- * 沙箱上下文
+ * 沙箱worker上下文
  */
-export class SandboxContext
+export class SandboxWorker
 {
     /**
-     * 沙箱iframe元素
-     * @type {HTMLIFrameElement}
-     */
-    #iframe = null;
-
-    /**
-     * 与沙箱的通信端口
+     * 与沙箱worker的通信端口
      * @type {MessagePort}
      */
     #port = null;
 
     /**
-     * 沙箱可用
-     * @type {boolean}
-     */
-    #available = false;
-
-    /**
-     * 沙箱已销毁
-     * @type {boolean}
-     */
-    #destroyed = false;
-
-    /**
      * 中止控制器
-     * 用于销毁沙箱时中止
+     * 用于销毁沙箱worker时中止
      * @type {AbortController}
      */
     #abortController = new AbortController();
 
     /**
-     * 沙箱可用事件
+     * 沙箱worker可用
+     * @type {boolean}
+     */
+    #available = false;
+
+    /**
+     * 沙箱worker已销毁
+     * @type {boolean}
+     */
+    #destroyed = false;
+
+    /**
+     * 沙箱worker可用事件
      * @type {EventHandler}
      */
     #availableEvent = new EventHandler();
-
-    /**
-     * 传递给沙箱的接口
-     * @type {Object}
-     */
-    apiObj = {};
 
     /**
      * 回调映射
@@ -63,37 +50,30 @@ export class SandboxContext
     #callbackRejectMap = new Map();
 
     /**
-     * @param {HTMLElement} [iframeElementParent]
+     * 这个沙箱worker所属的沙箱上下文
+     * @type {import("./SandboxContext").SandboxContext}
      */
-    constructor(iframeElementParent = document.body)
+    #sandboxContext = null;
+
+    /**
+     * 这个沙箱worker的id
+     * @type {string}
+     */
+    #sandboxWorkerId = "";
+
+    /**
+     * 传递给沙箱的接口
+     * @type {Object}
+     */
+    apiObj = {};
+
+    /**
+     * @param {import("./SandboxContext").SandboxContext} sandboxContext
+     * @param {MessagePort} port
+     * @param {string} sandboxWorkerId
+     */
+    constructor(sandboxContext, port, sandboxWorkerId)
     {
-        if (!(("sandbox" in HTMLIFrameElement.prototype) && Object.hasOwn(HTMLIFrameElement.prototype, "contentDocument")))
-            throw "sandbox property are not supported";
-        let iframe = document.createElement("iframe");
-        iframe.sandbox.add("allow-scripts");
-        iframe.style.display = "none";
-        iframe.srcdoc = ([
-            "<!DOCTYPE html>",
-            "<html>",
-
-            "<head>",
-            '<meta charset="utf-8" />',
-            '<title>iframe sandbox</title>',
-            '<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />',
-            "</head>",
-
-            "<body>",
-            "<script>",
-            sandboxScript,
-            "</script>",
-            "</body>",
-
-            "</html>"
-        ]).join("");
-
-
-        let channel = new MessageChannel();
-        let port = channel.port1;
         port.addEventListener("message", async (e) =>
         {
             let data = e.data;
@@ -155,25 +135,15 @@ export class SandboxContext
                 }
             }
         }, { signal: this.#abortController.signal });
-        iframe.addEventListener("load", () =>
-        {
-            if (!this.#available && !this.#destroyed)
-            {
-                if (iframe.contentDocument)
-                    throw "sandbox isolation failed";
-                port.start();
-                iframe.contentWindow.postMessage("setMessagePort", "*", [channel.port2]); // 初始化通信管道
-            }
-        }, { signal: this.#abortController.signal });
+        port.start();
 
-
-        iframeElementParent.appendChild(iframe);
-        this.#iframe = iframe;
+        this.#sandboxContext = sandboxContext;
+        this.#sandboxWorkerId = sandboxWorkerId;
         this.#port = port;
     }
 
     /**
-     * 等待沙箱可用
+     * 等待沙箱worker可用
      * @returns {Promise<void>}
      */
     async waitAvailable()
@@ -196,36 +166,34 @@ export class SandboxContext
     {
         if (!this.#available)
             await this.waitAvailable();
+        let loopDetectionFunctionName = "loopDet_" + (Math.floor(Math.random() * 100000000)).toString(36);
         let result = extractFunction(this.apiObj, this.#callbackMap);
         this.#port.postMessage({
             type: "execJs",
-            js: jsCodeStr,
+            js: `"use strict";` + jsCodeStr,
             param: result.result,
             fnMap: (result.fnMap.size > 0 ? result.fnMap : undefined),
-            paramList: ["api"]
+            paramName: ["api", loopDetectionFunctionName]
         });
     }
 
     /**
-     * 获取iframe元素
-     * 注意 移动沙箱在dom树中的位置将导致沙箱失效
+     * 沙箱worker的id
      */
-    get iframe()
+    get sandboxWorkerId()
     {
-        return this.#iframe;
+        return this.#sandboxWorkerId;
     }
 
     /**
-     * 销毁沙箱
-     * 销毁后无法对此沙箱执行操作
+     * 销毁沙箱worker
+     * 销毁后无法对此沙箱worker执行操作
      */
     destroy()
     {
         if (this.#destroyed)
             return;
         this.#destroyed = true;
-        this.#iframe.remove();
-        this.#iframe = null;
         this.#abortController.abort();
         this.#abortController = null;
         this.#port.close();
@@ -235,8 +203,12 @@ export class SandboxContext
         this.#availableEvent.removeAll();
         this.#availableEvent = null;
         this.#available = false;
+
+        if(this.#sandboxContext.available)
+        {
+            this.#sandboxContext.removeWorker(this);
+        }
+
+        this.#sandboxContext = null;
     }
-};
-
-
-
+}

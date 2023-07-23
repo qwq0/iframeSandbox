@@ -1,0 +1,7 @@
+{
+    "dependencies": {
+        "acorn": "^8.10.0",
+        "acorn-walk": "^8.2.0",
+        "astring": "^1.8.6"
+    }
+}

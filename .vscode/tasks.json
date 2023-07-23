@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "rollup -i src/main.js -o dist/iframeSandbox.js -f es",
+            "command": "rollup -i src/index.js -o dist/iframeSandbox.js -f es",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -16,7 +16,7 @@
         {
             "label": "build types",
             "type": "shell",
-            "command": "tsc ./src/main.js --declaration --allowJs --emitDeclarationOnly --strictNullChecks --exactOptionalPropertyTypes --outdir ./dist/types \n rollup -i dist/types/src/main.d.ts -o dist/iframeSandbox.d.ts -f es -p rollup-plugin-dts",
+            "command": "tsc ./src/index.js --declaration --allowJs --emitDeclarationOnly --strictNullChecks --exactOptionalPropertyTypes --outdir ./dist/types \n rollup -i dist/types/src/index.d.ts -o dist/iframeSandbox.d.ts -f es -p rollup-plugin-dts",
             "problemMatcher": [],
             "group": {
                 "kind": "build",

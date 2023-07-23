@@ -71,8 +71,17 @@ export class EventHandler
      */
     trigger(e)
     {
-        this.cbList.forEach(o => { o(e); });
-        this.onceCbList.forEach(o => { o(e); });
+        this.cbList.forEach(async (o) => { o(e); });
+        this.onceCbList.forEach(async (o) => { o(e); });
         this.onceCbList = [];
+    }
+
+    /**
+     * 存在监听器
+     * @returns {boolean}
+     */
+    existListener()
+    {
+        return (this.cbList.length > 0 || this.onceCbList.length > 0);
     }
 }

@@ -23,6 +23,10 @@ import { SandboxContext } from "../src/index.js";
         test_3: async (callback) =>
         {
             console.log("run test_3", await callback());
+        },
+        console_log: async (a) =>
+        {
+            console.log(a);
         }
     };
     sandbox.apiObj = apiObj;
@@ -73,6 +77,8 @@ import { SandboxContext } from "../src/index.js";
             for(let a of [])
             {
             }
+
+            await api.console_log(() => { console.log("test"); });
         })();
     `);
     console.log(sandbox);

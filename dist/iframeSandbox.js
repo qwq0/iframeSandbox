@@ -93,7 +93,7 @@ function injectFunction(obj, fnMap, port, callbackMap, callbackRejectMap)
     {
         if (!generatedFunctionMap.has(id))
         {
-            let generatedFunction = (...param) =>
+            let generatedFunction = (...param) => // TODO 修复沙箱销毁后执行函数的潜在内存泄漏问题
             {
                 return new Promise((resolve, reject) =>
                 {
@@ -245,6 +245,7 @@ class EventHandler
 
 /**
  * 沙箱worker上下文
+ * 需要从SandboxContext中分配
  */
 class SandboxWorker
 {
@@ -310,6 +311,8 @@ class SandboxWorker
     apiObj = {};
 
     /**
+     * 请勿调用此构造器创建SandboxWorker
+     * 使用SandboxContext.createWorker()进行创建
      * @param {import("./SandboxContext").SandboxContext} sandboxContext
      * @param {MessagePort} port
      * @param {string} sandboxWorkerId
@@ -436,14 +439,21 @@ class SandboxWorker
         if (this.#destroyed)
             return;
         this.#destroyed = true;
+
         this.#abortController.abort();
         this.#abortController = null;
+
         this.#port.close();
         this.#port = null;
+
+        this.#callbackMap.clear();
         this.#callbackMap = null;
+        this.#callbackRejectMap.clear();
         this.#callbackRejectMap = null;
+
         this.#availableEvent.removeAll();
         this.#availableEvent = null;
+        
         this.#available = false;
 
         if(this.#sandboxContext.available)
@@ -8316,16 +8326,24 @@ class SandboxContext
         if (this.#destroyed)
             return;
         this.#destroyed = true;
+
         this.#iframe.remove();
         this.#iframe = null;
+
         this.#abortController.abort();
         this.#abortController = null;
+
         this.#port.close();
         this.#port = null;
+
+        this.#callbackMap.clear();
         this.#callbackMap = null;
+        this.#callbackRejectMap.clear();
         this.#callbackRejectMap = null;
+
         this.#availableEvent.removeAll();
         this.#availableEvent = null;
+        
         this.#available = false;
     }
 }

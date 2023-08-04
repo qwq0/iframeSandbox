@@ -3,6 +3,7 @@ import { EventHandler } from "./util/EventHandler.js";
 
 /**
  * 沙箱worker上下文
+ * 需要从SandboxContext中分配
  */
 export class SandboxWorker
 {
@@ -68,6 +69,8 @@ export class SandboxWorker
     apiObj = {};
 
     /**
+     * 请勿调用此构造器创建SandboxWorker
+     * 使用SandboxContext.createWorker()进行创建
      * @param {import("./SandboxContext").SandboxContext} sandboxContext
      * @param {MessagePort} port
      * @param {string} sandboxWorkerId
@@ -194,14 +197,21 @@ export class SandboxWorker
         if (this.#destroyed)
             return;
         this.#destroyed = true;
+
         this.#abortController.abort();
         this.#abortController = null;
+
         this.#port.close();
         this.#port = null;
+
+        this.#callbackMap.clear();
         this.#callbackMap = null;
+        this.#callbackRejectMap.clear();
         this.#callbackRejectMap = null;
+
         this.#availableEvent.removeAll();
         this.#availableEvent = null;
+        
         this.#available = false;
 
         if(this.#sandboxContext.available)

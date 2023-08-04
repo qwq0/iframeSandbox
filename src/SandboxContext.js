@@ -275,16 +275,24 @@ export class SandboxContext
         if (this.#destroyed)
             return;
         this.#destroyed = true;
+
         this.#iframe.remove();
         this.#iframe = null;
+
         this.#abortController.abort();
         this.#abortController = null;
+
         this.#port.close();
         this.#port = null;
+
+        this.#callbackMap.clear();
         this.#callbackMap = null;
+        this.#callbackRejectMap.clear();
         this.#callbackRejectMap = null;
+
         this.#availableEvent.removeAll();
         this.#availableEvent = null;
+        
         this.#available = false;
     }
 };

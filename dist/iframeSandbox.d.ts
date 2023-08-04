@@ -1,8 +1,11 @@
 /**
  * 沙箱worker上下文
+ * 需要从SandboxContext中分配
  */
 declare class SandboxWorker {
     /**
+     * 请勿调用此构造器创建SandboxWorker
+     * 使用SandboxContext.createWorker()进行创建
      * @param {import("./SandboxContext").SandboxContext} sandboxContext
      * @param {MessagePort} port
      * @param {string} sandboxWorkerId

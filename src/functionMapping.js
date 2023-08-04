@@ -78,7 +78,7 @@ export function injectFunction(obj, fnMap, port, callbackMap, callbackRejectMap)
     {
         if (!generatedFunctionMap.has(id))
         {
-            let generatedFunction = (...param) =>
+            let generatedFunction = (...param) => // TODO 修复沙箱销毁后执行函数的潜在内存泄漏问题
             {
                 return new Promise((resolve, reject) =>
                 {

@@ -8348,4 +8348,4 @@ class SandboxContext
     }
 }
 
-export { SandboxContext };
+export { SandboxContext, SandboxWorker };

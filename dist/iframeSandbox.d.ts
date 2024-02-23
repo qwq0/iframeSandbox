@@ -89,4 +89,4 @@ declare class SandboxContext {
     #private;
 }
 
-export { SandboxContext };
+export { SandboxContext, SandboxWorker };
